@@ -4,16 +4,42 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { Resend } = require('resend');
+const sgMail = require('@sendgrid/mail');
 const User = require('../models/User');
 
 // Temporary storage for verification codes (in production, use Redis or database)
 const verificationCodes = new Map();
 
-// Email configuration - support both Resend (for production) and SMTP (for local)
+// Email configuration - support SendGrid, Resend, and SMTP
 let emailService;
 let transporter;
 
-if (process.env.RESEND_API_KEY) {
+if (process.env.SENDGRID_API_KEY) {
+  // Use SendGrid for production (100 emails/day free)
+  emailService = 'sendgrid';
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  console.log('✅ Using SendGrid email service');
+  
+  transporter = {
+    sendMail: async (options) => {
+      try {
+        console.log(`📧 Sending email via SendGrid to: ${options.to}`);
+        const msg = {
+          to: options.to,
+          from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+          subject: options.subject,
+          html: options.html,
+        };
+        const result = await sgMail.send(msg);
+        console.log(`✅ SendGrid response:`, result[0].statusCode);
+        return { success: true, result };
+      } catch (error) {
+        console.error(`❌ SendGrid error:`, error.response?.body || error);
+        throw error;
+      }
+    }
+  };
+} else if (process.env.RESEND_API_KEY) {
   // Use Resend for production (works on Render free tier)
   emailService = 'resend';
   const resend = new Resend(process.env.RESEND_API_KEY);
