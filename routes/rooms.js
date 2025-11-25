@@ -328,8 +328,8 @@ router.delete('/:id', protect, async (req, res) => {
       });
     }
 
-    // Check if user is the lecturer
-    if (room.lecturer.toString() !== req.user._id.toString()) {
+    // Check if user is the lecturer (skip check for one-time rooms with no lecturer)
+    if (room.lecturer && room.lecturer.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this room'
