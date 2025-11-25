@@ -14,7 +14,7 @@ router.get('/profile', protect, async (req, res) => {
       success: true,
       data: {
         id: user._id,
-        name: user.name,
+        name: user.fullName,
         email: user.email,
         role: user.role,
         createdAt: user.createdAt
@@ -59,7 +59,7 @@ router.put('/profile', protect, async (req, res) => {
     }
 
     if (name) {
-      user.name = name;
+      user.fullName = name;
     }
 
     await user.save();
@@ -69,7 +69,7 @@ router.put('/profile', protect, async (req, res) => {
       message: 'Profile updated successfully',
       data: {
         id: user._id,
-        name: user.name,
+        name: user.fullName,
         email: user.email,
         role: user.role
       }
