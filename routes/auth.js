@@ -64,7 +64,7 @@ router.post('/google', async (req, res) => {
         email,
         googleId,
         password: `google_${googleId}_${Date.now()}`, // Random password (not used)
-        role: 'lecturer' // Default role for Google sign-in users
+        role: 'lecturer' // Google sign-in users are lecturers by default
       });
     }
 
@@ -74,14 +74,12 @@ router.post('/google', async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Login successful',
-      data: {
-        token,
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role
-        }
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
       }
     });
   } catch (error) {
