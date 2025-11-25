@@ -9,7 +9,7 @@ const { protect } = require('../middleware/auth');
 // @access  Public
 router.post('/one-time', async (req, res) => {
   try {
-    const { lecturerName } = req.body;
+    const { lecturerName, questionsVisible } = req.body;
 
     if (!lecturerName || !lecturerName.trim()) {
       return res.status(400).json({
@@ -29,7 +29,7 @@ router.post('/one-time', async (req, res) => {
       roomCode,
       lecturer: null, // No user account
       lecturerName: lecturerName.trim(),
-      questionsVisible: true,
+      questionsVisible: questionsVisible !== undefined ? questionsVisible : true,
       isOneTime: true,
       expiresAt
     });
