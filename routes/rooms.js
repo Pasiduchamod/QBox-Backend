@@ -4,6 +4,58 @@ const Room = require('../models/Room');
 const Question = require('../models/Question');
 const { protect } = require('../middleware/auth');
 
+// @route   POST /api/rooms/one-time
+// @desc    Create a one-time anonymous room (no authentication required)
+// @access  Public
+router.post('/one-time', async (req, res) => {
+  try {
+    const { lecturerName } = req.body;
+
+    if (!lecturerName || !lecturerName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide your name'
+      });
+    }
+
+    // Generate unique room code
+    const roomCode = await Room.generateRoomCode();
+
+    // Create one-time room (expires in 1 hour)
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+    const room = await Room.create({
+      roomName: `${lecturerName.trim()}'s Room`,
+      roomCode,
+      lecturer: null, // No user account
+      lecturerName: lecturerName.trim(),
+      questionsVisible: true,
+      isOneTime: true,
+      expiresAt
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'One-time room created successfully',
+      data: {
+        room: {
+          _id: room._id,
+          roomName: room.roomName,
+          code: room.roomCode,
+          lecturerName: room.lecturerName,
+          expiresAt: room.expiresAt
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Create one-time room error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
 // @route   POST /api/rooms
 // @desc    Create a new room
 // @access  Private (Lecturer)

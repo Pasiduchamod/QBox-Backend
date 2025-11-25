@@ -17,7 +17,7 @@ const roomSchema = new mongoose.Schema({
   lecturer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false // Allow null for one-time rooms
   },
   lecturerName: {
     type: String,
@@ -27,6 +27,15 @@ const roomSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
     description: 'If false, students can only see their own questions'
+  },
+  isOneTime: {
+    type: Boolean,
+    default: false,
+    description: 'One-time rooms expire after 1 hour and are not tied to a user account'
+  },
+  expiresAt: {
+    type: Date,
+    description: 'Expiration time for one-time rooms'
   },
   status: {
     type: String,
