@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Room = require('../models/Room');
 const { OAuth2Client } = require('google-auth-library');
 
 // Initialize Google OAuth client
@@ -15,6 +16,62 @@ const generateToken = (id) => {
     expiresIn: process.env.JWT_EXPIRE || '30d'
   });
 };
+
+// @route   POST /api/auth/join-with-code
+// @desc    Join room with one-time code (anonymous, expires in 1 hour)
+// @access  Public
+router.post('/join-with-code', async (req, res) => {
+  try {
+    const { roomCode } = req.body;
+
+    if (!roomCode) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Room code is required' 
+      });
+    }
+
+    // Find room by code
+    const room = await Room.findOne({ roomCode: roomCode.toUpperCase() }).populate('lecturer', 'fullName email');
+
+    if (!room) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Invalid room code' 
+      });
+    }
+
+    // Check if room is still active
+    if (!room.isActive) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This room has been closed' 
+      });
+    }
+
+    // Set expiry time (1 hour from now)
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    res.status(200).json({
+      success: true,
+      message: 'Room access granted',
+      room: {
+        _id: room._id,
+        roomName: room.roomName,
+        roomCode: room.roomCode,
+        lecturer: room.lecturer
+      },
+      expiresAt,
+      isAnonymous: true
+    });
+  } catch (error) {
+    console.error('❌ Join with code error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
 
 // @route   POST /api/auth/google
 // @desc    Login/signup with Google
