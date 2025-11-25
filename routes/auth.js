@@ -64,7 +64,7 @@ router.post('/google', async (req, res) => {
         email,
         googleId,
         password: `google_${googleId}_${Date.now()}`, // Random password (not used)
-        role: 'student' // Default role
+        role: 'lecturer' // Default role for Google sign-in users
       });
     }
 
