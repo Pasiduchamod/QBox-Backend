@@ -91,6 +91,63 @@ router.post('/google', async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/google-web
+// @desc    Login/signup with Google for Web (using access_token)
+// @access  Public
+router.post('/google-web', async (req, res) => {
+  try {
+    const { email, name, sub: googleId } = req.body;
+
+    if (!email || !name || !googleId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User information is required' 
+      });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Existing user - update Google ID if not set
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      user = await User.create({
+        fullName: name,
+        email,
+        googleId,
+        password: `google_${googleId}_${Date.now()}`, // Random password (not used)
+        role: 'lecturer' // Google sign-in users are lecturers by default
+      });
+    }
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('❌ Google web auth error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during Google authentication' 
+    });
+  }
+});
+
 // @route   POST /api/auth/signup
 // @desc    Register a new user (fallback - Google Sign-In preferred)
 // @access  Public
